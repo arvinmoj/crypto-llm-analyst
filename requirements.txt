@@ -1,0 +1,33 @@
+# Core LangChain and LLM dependencies
+langchain>=0.1.0
+langchain-openai>=0.0.5
+langchain-community>=0.0.20
+
+# Database and real-time data
+supabase>=2.0.0
+sqlalchemy>=2.0.0
+psycopg2-binary>=2.9.0
+
+# GraphQL and WebSocket for Bitquery
+gql>=3.4.1
+websockets>=12.0
+aiohttp>=3.9.0
+
+# Data processing
+pandas>=2.0.0
+numpy>=1.24.0
+
+# Vector database for RAG
+chromadb>=0.4.0
+
+# Web framework and API
+fastapi>=0.104.0
+uvicorn>=0.24.0
+streamlit>=1.28.0
+
+# Visualization
+plotly>=5.17.0
+
+# Configuration and utilities
+python-dotenv>=1.0.0
+pydantic>=2.0.0

@@ -1,0 +1,377 @@
+{
+  "name": "Bitcoin Analysis Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "triggerTimes": {
+          "item": [
+            {
+              "mode": "everyMinute",
+              "minute": 15
+            }
+          ]
+        }
+      },
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:8000/api/v1/analysis/BTC/quick",
+        "options": {}
+      },
+      "name": "Get BTC Analysis",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        470,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json[\"signal_type\"]}}",
+              "operation": "equal",
+              "value2": "BUY"
+            }
+          ]
+        }
+      },
+      "name": "Check for Buy Signal",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        690,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:8000/api/v1/alerts/create",
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "{\n  \"symbol\": \"BTC\",\n  \"alert_type\": \"BUY_SIGNAL\",\n  \"message\": \"Strong buy signal detected for Bitcoin\",\n  \"confidence\": {{$json[\"confidence\"]}},\n  \"price\": {{$json[\"current_price\"]}}\n}",
+        "options": {}
+      },
+      "name": "Send Buy Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        910,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{$json[\"rsi\"]}}",
+              "operation": "larger",
+              "value2": 70
+            }
+          ]
+        }
+      },
+      "name": "Check RSI Overbought",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        910,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:8000/api/v1/alerts/create",
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "{\n  \"symbol\": \"BTC\",\n  \"alert_type\": \"OVERBOUGHT_WARNING\",\n  \"message\": \"Bitcoin RSI indicates overbought conditions\",\n  \"rsi_value\": {{$json[\"rsi\"]}},\n  \"price\": {{$json[\"current_price\"]}}\n}",
+        "options": {}
+      },
+      "name": "Send Overbought Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        1130,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:8000/api/v1/data/store",
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "{{$json}}",
+        "options": {}
+      },
+      "name": "Store Analysis Data",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        1350,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:8000/api/v1/analysis/ETH/quick",
+        "options": {}
+      },
+      "name": "Get ETH Analysis",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        470,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{$json[\"volume_change_24h\"]}}",
+              "operation": "larger",
+              "value2": 50
+            }
+          ]
+        }
+      },
+      "name": "Check Volume Spike",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        690,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:8000/api/v1/alerts/create",
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "{\n  \"symbol\": \"ETH\",\n  \"alert_type\": \"VOLUME_SPIKE\",\n  \"message\": \"Unusual volume spike detected for Ethereum\",\n  \"volume_change\": {{$json[\"volume_change_24h\"]}},\n  \"price\": {{$json[\"current_price\"]}}\n}",
+        "options": {}
+      },
+      "name": "Send Volume Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        910,
+        600
+      ]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:8000/api/v1/sentiment/aggregate",
+        "options": {}
+      },
+      "name": "Get Market Sentiment",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        250,
+        700
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{$json[\"overall_sentiment\"]}}",
+              "operation": "smaller",
+              "value2": -0.5
+            }
+          ]
+        }
+      },
+      "name": "Check Extreme Fear",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        470,
+        700
+      ]
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:8000/api/v1/alerts/create",
+        "sendBody": true,
+        "bodyContentType": "json",
+        "jsonBody": "{\n  \"symbol\": \"MARKET\",\n  \"alert_type\": \"EXTREME_FEAR\",\n  \"message\": \"Market sentiment shows extreme fear - potential buying opportunity\",\n  \"sentiment_score\": {{$json[\"overall_sentiment\"]}}\n}",
+        "options": {}
+      },
+      "name": "Send Fear Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        690,
+        800
+      ]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get BTC Analysis",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get ETH Analysis",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Market Sentiment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get BTC Analysis": {
+      "main": [
+        [
+          {
+            "node": "Check for Buy Signal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check for Buy Signal": {
+      "main": [
+        [
+          {
+            "node": "Send Buy Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Check RSI Overbought",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Buy Alert": {
+      "main": [
+        [
+          {
+            "node": "Store Analysis Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check RSI Overbought": {
+      "main": [
+        [
+          {
+            "node": "Send Overbought Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Store Analysis Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Overbought Alert": {
+      "main": [
+        [
+          {
+            "node": "Store Analysis Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get ETH Analysis": {
+      "main": [
+        [
+          {
+            "node": "Check Volume Spike",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Volume Spike": {
+      "main": [
+        [
+          {
+            "node": "Send Volume Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Get Market Sentiment": {
+      "main": [
+        [
+          {
+            "node": "Check Extreme Fear",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Extreme Fear": {
+      "main": [
+        [
+          {
+            "node": "Send Fear Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z",
+      "id": "1",
+      "name": "crypto-analysis"
+    }
+  ],
+  "triggerCount": 1,
+  "updatedAt": "2024-01-01T00:00:00.000Z",
+  "versionId": "1"
+}
